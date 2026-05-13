@@ -7,7 +7,7 @@
     "light": "#347A00",
     "dark": "#84FF00"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/192x192.png",
   "navigation": {
     "tabs": [
       {
@@ -42,6 +42,7 @@
             "group": "Integrations",
             "pages": [
               "integrations/sdk",
+              "integrations/jupiter-routing",
               "integrations/aggregators",
               "integrations/wallets-and-vaults"
             ]
@@ -61,14 +62,14 @@
     "global": {
       "anchors": [
         {
-          "anchor": "App",
-          "href": "https://app.overpass.money",
+          "anchor": "Overpass",
+          "href": "https://overpass.ag",
           "icon": "arrow-up-right"
         },
         {
-          "anchor": "Symmetry",
-          "href": "https://symmetry.fi",
-          "icon": "building-2"
+          "anchor": "Docs",
+          "href": "https://docs.overpass.ag",
+          "icon": "book-open"
         }
       ]
     }
@@ -78,16 +79,11 @@
     "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@symmetry.fi"
-      }
-    ],
+    "links": [],
     "primary": {
       "type": "button",
       "label": "Launch app",
-      "href": "https://app.overpass.money"
+      "href": "https://overpass.ag"
     }
   },
   "contextual": {
@@ -103,9 +99,6 @@
     ]
   },
   "footer": {
-    "socials": {
-      "x": "https://x.com/symmetry_fi",
-      "github": "https://github.com/symmetry-hq"
-    }
+    "socials": {}
   }
 }

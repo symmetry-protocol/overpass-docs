@@ -1,0 +1,73 @@
+---
+title: "Jupiter routing"
+description: "The Rust SDK built for Jupiter's Overpass routing integration."
+icon: "route"
+---
+
+The Overpass Rust SDK was built for Jupiter's Overpass routing integration. It is the Rust implementation Jupiter can use to quote and route through Overpass wrapper vaults.
+
+Other Rust integrators can also use it directly as the lower-level Overpass Rust SDK.
+
+<Card
+  title="overpass-rust-sdk"
+  icon="github"
+  href="https://github.com/symmetry-protocol/overpass-rust-sdk"
+>
+  Rust SDK built for Jupiter's Overpass routing integration. Other Rust integrators can use it directly too.
+</Card>
+
+## What it does
+
+The SDK implements Jupiter's `Amm` trait for Overpass wrapper vaults. This lets Jupiter represent Overpass deposit and withdraw paths as route legs.
+
+It also contains the Rust-side Overpass logic needed to load wrapper vaults, read source-pool state, quote deposits and withdrawals, and build route behavior around the supported adapters.
+
+It supports the same source protocol families as Overpass:
+
+- Kamino Lend
+- Save Lend
+- Kamino Vault
+- MarginFi
+- Lulo Protected
+
+## When to use it
+
+Use the Rust SDK if you are integrating Overpass from Rust, especially if you are building router infrastructure or a Jupiter-compatible AMM integration.
+
+Typical use cases include:
+
+- adding Overpass yield-token routes to Jupiter
+- building a Jupiter-compatible Overpass adapter
+- quoting deposits from an underlying asset into a yield token
+- quoting withdrawals from a yield token back into the underlying asset
+- composing Overpass legs with other swap legs
+- testing Overpass source-protocol math outside the TypeScript SDK or web app
+
+## Route shape
+
+Deposit routes:
+
+```text
+input token -> underlying asset -> Overpass deposit -> yield token
+```
+
+Withdrawal routes:
+
+```text
+yield token -> Overpass withdraw -> underlying asset -> output token
+```
+
+## Integration notes
+
+Routers should still apply the same safety checks described in [aggregator integration](/integrations/aggregators):
+
+- source-pool caps
+- pause state
+- utilization
+- withdrawal liquidity
+- stale oracle state
+- quote warnings
+- protocol and creator fees
+- registry verification status
+
+The SDK mirrors Overpass protocol math for routing, but route selection should still account for source-pool health and user-facing risk.

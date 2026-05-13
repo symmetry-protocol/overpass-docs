@@ -4,6 +4,9 @@ Documentation for Overpass, a Solana lending-pool tokenization and routing layer
 
 Overpass turns supported lending pools into redeemable, swappable SPL yield tokens. Minting deposits into the underlying source pool, and burning withdraws from it.
 
+Public docs: https://docs.overpass.ag
+Product site: https://overpass.ag
+
 ## Local preview
 
 Install the Mintlify CLI and run the preview server from this directory:
