@@ -1,0 +1,81 @@
+---
+title: "Minting and redemption"
+description: "How deposits create yield tokens and burns redeem the underlying asset."
+icon: "repeat"
+---
+
+Minting and redemption are the primary liquidity paths for Overpass yield tokens.
+
+## Minting
+
+Minting a yield token is a deposit into the underlying source pool.
+
+The flow is:
+
+1. The user or application selects a supported source pool.
+2. The adapter reads the pool state, cap, pause status, constraints, and exchange-rate data.
+3. The user deposits the underlying asset through Overpass.
+4. Overpass deposits the asset into the source lending protocol.
+5. Overpass mints the corresponding yield token to the user.
+
+```text
+underlying asset -> Overpass deposit -> source lending pool -> yield token
+```
+
+The output amount is derived from source-pool accounting, wrapper supply, fees, and the current redeemable value per token.
+
+## Redemption
+
+Redemption burns a yield token and withdraws the underlying asset.
+
+The flow is:
+
+1. The holder submits yield tokens for withdrawal.
+2. The adapter checks the source pool's withdrawal path and current state.
+3. Overpass burns the yield tokens.
+4. Overpass redeems from the source lending protocol.
+5. The holder receives the underlying asset.
+
+```text
+yield token -> Overpass withdraw -> source lending pool -> underlying asset
+```
+
+Redemption quality is inherited from the source pool. If the pool is healthy and has available liquidity, the token can be redeemed through Overpass. If the pool is highly utilized, paused, stale-oracle, capped, or impaired, redemption can fail or require waiting for liquidity to return.
+
+## Empty wrappers
+
+An empty wrapper starts at a 1:1 rate by construction. After deposits and yield accrual, the rate follows the wrapper's source-pool accounting.
+
+Creators can optionally include an initial deposit during wrapper creation. This gives the token immediate backing and avoids launching an empty wrapper.
+
+## Minimum deposits and withdrawals
+
+Some source protocols enforce minimum amounts. Overpass exposes source constraints so applications can prevent transactions that are likely to fail.
+
+```ts
+const constraints = await Overpass.fetchSourceConstraints(
+  connection,
+  sourcePool,
+  "klend",
+);
+
+console.log(constraints.minDeposit, constraints.minWithdraw);
+```
+
+Applications should display these minimums before users create wrappers or deposit into existing ones.
+
+## Slippage protection
+
+Deposit and withdrawal builders accept `minOut`. Use it to protect users from receiving less than expected.
+
+```ts
+await buildOverpassSwap(connection, {
+  user,
+  wrapperMint,
+  amount,
+  direction: "deposit",
+  minOut,
+});
+```
+
+For aggregator routes, compute `minOut` after accounting for the swap leg into the underlying asset, the Overpass mint or burn leg, and the final output swap when exiting.

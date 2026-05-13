@@ -1,0 +1,73 @@
+---
+title: "Supported protocols"
+description: "Protocols and source-pool types supported by Overpass."
+icon: "network"
+---
+
+Overpass supports multiple Solana lending venues through explicit protocol adapters.
+
+| Protocol | Source kind | Pool kind | Deposit | Withdraw |
+| --- | --- | --- | --- | --- |
+| Kamino Lend | `klend` | lending reserve | Supported | Supported |
+| Kamino Vault | `kvault` | vault | Supported | Supported |
+| Save | `save` | lending reserve | Supported | Supported |
+| Lulo protected pools | `lulo` | lending pool | Supported | Supported |
+| marginfi v2 | `marginfi` | bank | Supported | Supported |
+
+## Adapter responsibility
+
+Each adapter defines how Overpass interacts with a source protocol:
+
+- deposit instruction construction
+- withdrawal instruction construction
+- exchange-rate or share-price reads
+- cap checks
+- pause-state checks
+- source minimums
+- quote logic
+- account metas and lookup tables
+- warning generation
+
+Keeping protocol logic adapter-specific makes integrations easier to test and audit.
+
+## Kamino Lend
+
+Kamino Lend reserves are isolated lending markets. Each reserve has its own oracle, interest curve, risk parameters, utilization, and cap behavior.
+
+Overpass yield tokens for Kamino Lend deposit into the selected reserve and redeem through the same reserve.
+
+## Kamino Vault
+
+Kamino Vaults can allocate across underlying Kamino Lend reserves. Deposits may land in an idle pool before the vault rebalancer deploys funds according to vault logic.
+
+Overpass follows the vault's accounting and redemption path.
+
+## Save
+
+Save, formerly Solend, exposes lending reserves with reserve-specific accounting, caps, and liquidity constraints.
+
+Overpass wraps supported Save reserves through the Save adapter.
+
+## Lulo
+
+Overpass supports Lulo protected pools. Lulo pools can expose their own rate and pool data through Lulo APIs in addition to on-chain state.
+
+Overpass wraps the supported protected-pool path.
+
+## marginfi
+
+marginfi v2 banks expose lending markets with bank-specific utilization, asset-weight, liability-weight, and cap behavior.
+
+Overpass wraps supported marginfi banks through the marginfi adapter.
+
+## Adding protocols
+
+A new protocol requires an adapter that can:
+
+- identify source-pool accounts
+- read source-pool accounting
+- build deposit and withdraw instructions
+- detect caps and pause state
+- produce deterministic quotes
+- surface warnings and constraints
+- pass adapter tests for share conservation, rounding, caps, and failure modes

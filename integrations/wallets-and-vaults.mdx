@@ -1,0 +1,80 @@
+---
+title: "Wallets and vaults"
+description: "Display, hold, and compose Overpass yield tokens."
+icon: "wallet"
+---
+
+Wallets and vaults can use Overpass yield tokens as productive SPL assets.
+
+## Wallet integration
+
+Wallets should display yield-token positions with enough source context for users to understand what they hold.
+
+Recommended display fields:
+
+- token name and symbol
+- wrapper mint
+- underlying mint
+- source protocol
+- source pool
+- redeemable value per token
+- total wallet balance
+- estimated underlying value
+- creator and protocol deposit fees
+- source-pool warnings
+
+Avoid displaying a yield token as a generic stablecoin or generic wrapped token. It is a source-pool-specific claim.
+
+## Vault integration
+
+Vaults and indexes can hold yield tokens as portfolio assets. This lets strategies allocate to lending pools while keeping the position transferable and composable.
+
+Before adding a yield token to a vault, evaluate:
+
+- source-pool withdrawal liquidity
+- cap behavior
+- accounting stability
+- oracle health
+- concentration limits
+- route availability for rebalancing
+- whether the wrapper is verified or canonical
+
+## Treasury use
+
+Treasuries can use Overpass to allocate idle assets into lending yield while keeping a tokenized position on-chain.
+
+Treasury integrations should define:
+
+- allowed source protocols
+- allowed underlying assets
+- maximum allocation per source pool
+- minimum withdrawal-liquidity requirements
+- risk escalation rules
+- exit routes
+
+## Collateral markets
+
+Collateral markets need more conservative handling.
+
+Before accepting an Overpass yield token as collateral, evaluate:
+
+- source protocol risk
+- source-pool liquidity and utilization
+- oracle dependencies
+- redemption delay and failure modes
+- price feed design
+- liquidation route availability
+- wrapper registry status
+- maximum loan-to-value and caps
+
+An external oracle or risk engine may be appropriate for collateral use. The Overpass mint and redeem path uses source-pool accounting, but lending markets need independent collateral valuation and liquidation assumptions.
+
+## Displaying APY
+
+Use precise labels:
+
+- realized APY or NAV growth is backward-looking
+- source-pool APY is forward-looking
+- projected values are estimates, not guarantees
+
+Never imply that historical NAV growth guarantees future yield.

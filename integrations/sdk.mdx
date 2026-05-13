@@ -1,0 +1,221 @@
+---
+title: "TypeScript SDK"
+description: "Build Overpass integrations with @symmetry-hq/overpass."
+icon: "code"
+---
+
+The Overpass TypeScript SDK provides helpers for discovery, quoting, wrapper creation, deposits, withdrawals, fee claiming, and source-pool listing.
+
+## Install
+
+```sh
+npm install @symmetry-hq/overpass @solana/web3.js @solana/spl-token
+```
+
+## Core imports
+
+```ts
+import {
+  PROGRAM_ID,
+  Overpass,
+  OverpassLoader,
+  SwapMode,
+  fetchAllPools,
+  loadAllWrappers,
+  loadWrappersByCreator,
+  loadWrappersByProtocol,
+  createWrapper,
+  buildOverpassSwap,
+  deposit,
+  withdraw,
+  claimCreatorFees,
+  updateCreatorFee,
+} from "@symmetry-hq/overpass";
+```
+
+## Program ID
+
+```ts
+import { PROGRAM_ID } from "@symmetry-hq/overpass";
+
+console.log(PROGRAM_ID.toBase58());
+```
+
+Mainnet:
+
+```text
+WRAPdXmxrH37RKUbH1QMnYrKdNe8w4Kz44t1cXmYeum
+```
+
+## List source pools
+
+Use source-pool listing when building market discovery screens.
+
+```ts
+const pools = await fetchAllPools(connection);
+
+for (const pool of pools) {
+  console.log(pool.protocol, pool.kind, pool.address, pool.underlyingMint);
+}
+```
+
+Each pool includes:
+
+- protocol
+- kind, either `lend` or `vault`
+- address
+- underlying mint
+- mint decimals
+- deposit cap state
+- protocol-specific state
+
+## List yield tokens
+
+Use wrapper listing when building token discovery screens.
+
+```ts
+const wrappers = await loadAllWrappers(connection, {
+  programId: PROGRAM_ID,
+  refresh: true,
+});
+```
+
+You can also filter by creator or protocol:
+
+```ts
+const byCreator = await loadWrappersByCreator(connection, creator);
+const byProtocol = await loadWrappersByProtocol(connection, 1);
+```
+
+Protocol kinds:
+
+```ts
+enum ProtocolKind {
+  Kvault = 0,
+  Klend = 1,
+  Save = 2,
+  Lulo = 3,
+  Marginfi = 4,
+}
+```
+
+## Refresh wrapper state
+
+Some wrappers need fresh source accounts before quoting.
+
+```ts
+const loader = new OverpassLoader();
+await loader.refreshMany(connection, wrappers);
+```
+
+Then create a quote context:
+
+```ts
+const ctx = wrapper.getQuoteContext(
+  BigInt(currentSlot),
+  BigInt(Math.floor(Date.now() / 1000)),
+);
+```
+
+## Quote
+
+```ts
+const quote = wrapper.quote(
+  {
+    amount: 1_000_000n,
+    inputMint: wrapper.underlyingMint,
+    outputMint: wrapper.wrapperMint,
+    swapMode: SwapMode.ExactIn,
+  },
+  ctx,
+);
+
+console.log({
+  outAmount: quote.outAmount,
+  feeAmount: quote.feeAmount,
+  warnings: quote.warnings,
+});
+```
+
+Quotes can produce warnings. Treat warnings as route-quality signals and block execution when they indicate likely failure.
+
+## Build a deposit or withdrawal
+
+```ts
+const built = await buildOverpassSwap(connection, {
+  user,
+  wrapperMint,
+  amount: 1_000_000n,
+  direction: "deposit",
+  minOut: 0n,
+});
+```
+
+The returned bundle includes instructions, lookup tables, and suggested compute units. Compose it into your transaction builder or wallet flow.
+
+Convenience helpers are also available:
+
+```ts
+const depositIx = await deposit(connection, {
+  user,
+  wrapperMint,
+  amount,
+  minOut,
+});
+
+const withdrawIx = await withdraw(connection, {
+  user,
+  wrapperMint,
+  amount,
+  minOut,
+});
+```
+
+## Create a wrapper
+
+```ts
+const result = await createWrapper(connection, {
+  creator,
+  source,
+  underlyingMint,
+  name,
+  symbol,
+  uri,
+  creatorDepositFeeBps,
+  initialDeposit,
+});
+```
+
+The result includes a versioned transaction and the new wrapper mint.
+
+## Source constraints
+
+Use source constraints to display minimum deposits and withdrawals.
+
+```ts
+const constraints = await Overpass.fetchSourceConstraints(
+  connection,
+  source,
+  "marginfi",
+);
+```
+
+Valid source kinds are:
+
+```text
+kvault
+klend
+save
+lulo
+marginfi
+```
+
+## Global config
+
+```ts
+const { pda, state } = await Overpass.fetchGlobalConfig(connection);
+
+console.log(pda.toBase58(), state);
+```
+
+The global config includes program-wide settings such as admin, fee recipient, protocol deposit fee, and maximum creator deposit fee.

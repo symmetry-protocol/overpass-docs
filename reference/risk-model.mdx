@@ -1,0 +1,89 @@
+---
+title: "Risk model"
+description: "Risks inherited by Overpass yield tokens and checks integrators should perform."
+icon: "shield-alert"
+---
+
+Overpass makes lending-pool exposure easier to access and compose. It does not remove lending risk.
+
+Every yield token inherits the conditions of its source pool.
+
+## Main risk categories
+
+### Source protocol risk
+
+The source lending protocol controls the pool's core accounting, interest accrual, liquidation behavior, oracle dependencies, and reserve management.
+
+If the source protocol has a bug or governance issue, the corresponding yield token can be affected.
+
+### Source-pool liquidity risk
+
+Withdrawals depend on available liquidity in the source pool.
+
+If utilization is high, a holder may not be able to redeem a large position immediately. The pool may need borrower repayments or new deposits before withdrawals can complete.
+
+### Cap and pause risk
+
+Source pools can have deposit caps or paused deposits.
+
+If a pool is at capacity, new deposits can fail. If deposits are paused, minting a yield token can fail even while existing positions remain withdrawable.
+
+### Oracle risk
+
+Some lending protocols require fresh oracle data for reserve refreshes, deposits, withdrawals, or risk checks.
+
+If a source pool depends on a stale or deprecated oracle, Overpass transactions can fail.
+
+### Bad-debt and impairment risk
+
+If a source pool has bad debt or impaired assets, yield-token redeemability can be affected. Overpass surfaces this as source-pool-specific risk; it does not socialize risk across unrelated wrappers.
+
+### Adapter risk
+
+Adapter correctness is the main Overpass implementation risk.
+
+Adapters must correctly read source accounting, handle rounding, build protocol instructions, enforce caps, detect pause state, and produce accurate quotes.
+
+## Safety design
+
+Overpass is designed around:
+
+- deterministic accounting from source protocols
+- explicit protocol adapters
+- source-pool state checks
+- cap and pause handling
+- quote warnings
+- conservative UI blocking for likely failures
+- adapter tests for share conservation, rounding, redeemability, and edge cases
+- independent audit and monitoring paths for wrappers and adapters
+
+## Integrator checklist
+
+Before presenting a route, check:
+
+- source protocol
+- source pool
+- wrapper mint
+- underlying mint
+- source-pool cap
+- source-pool pause state
+- utilization and withdrawal liquidity
+- oracle status
+- quote warnings
+- creator fee
+- protocol fee
+- registry verification
+
+For collateral or leveraged integrations, add independent risk limits and external valuation controls.
+
+## User-facing language
+
+Use clear language:
+
+- "Yield token backed by a specific source pool"
+- "Redeemability depends on source-pool liquidity"
+- "APY is not guaranteed"
+- "High utilization can delay or block withdrawals"
+- "This token inherits risk from the underlying lending protocol"
+
+Avoid language that implies guaranteed yield, instant redemption in all conditions, or protocol-wide backing across unrelated pools.

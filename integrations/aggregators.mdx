@@ -1,0 +1,90 @@
+---
+title: "Aggregator integration"
+description: "Route swaps into and out of Overpass yield tokens."
+icon: "shuffle"
+---
+
+Aggregators can integrate Overpass as a protocol leg that converts between an underlying asset and a pool-backed yield token.
+
+## Deposit route shape
+
+```text
+input token -> underlying asset -> Overpass deposit -> yield token
+```
+
+The aggregator handles the input swap. Overpass handles the mint leg.
+
+## Withdrawal route shape
+
+```text
+yield token -> Overpass withdraw -> underlying asset -> output token
+```
+
+Overpass handles the burn leg. The aggregator handles the output swap.
+
+## Integration steps
+
+1. Discover wrappers with `loadAllWrappers`.
+2. Refresh wrapper state with `OverpassLoader`.
+3. Quote deposit and withdrawal amounts with `wrapper.quote`.
+4. Check warnings and source-pool status.
+5. Build the Overpass leg with `buildOverpassSwap`.
+6. Compose Overpass instructions with swap instructions.
+7. Use lookup tables and compute-unit suggestions from the builder.
+
+## Route metadata
+
+Route responses should include:
+
+- wrapper mint
+- underlying mint
+- source pool
+- source protocol
+- source-pool status
+- creator deposit fee
+- protocol deposit fee
+- expected output
+- quote warnings
+- registry verification status, when available
+
+## Deposit checks
+
+Before routing into a yield token, check:
+
+- the source pool accepts deposits
+- the cap has remaining capacity
+- the requested amount is above the source minimum
+- the source oracle is healthy
+- quote warnings are not blocking
+- token metadata is clear enough for user display
+
+## Withdrawal checks
+
+Before routing out of a yield token, check:
+
+- source-pool liquidity is available
+- utilization is not near withdrawal-blocking levels
+- the source oracle is healthy
+- quote warnings are not blocking
+- the output route has acceptable slippage
+
+## Ranking routes
+
+Do not rank only by headline APY.
+
+A robust route ranker should consider:
+
+- expected output after fees
+- source-pool capacity
+- withdrawal health
+- utilization
+- risk labels
+- registry verification
+- historical NAV behavior
+- source protocol reputation
+
+## Failure handling
+
+If a source pool changes state between quote and execution, the transaction can fail. This is normal for lending integrations with dynamic caps, utilization, and oracle requirements.
+
+Applications should surface a clear retry path and refresh quotes before resubmission.

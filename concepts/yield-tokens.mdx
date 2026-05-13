@@ -1,0 +1,74 @@
+---
+title: "Yield tokens"
+description: "Understand Overpass pool-backed yield tokens."
+icon: "coins"
+---
+
+An Overpass yield token is a fungible SPL token backed by a specific lending pool.
+
+When someone deposits through Overpass, the underlying asset is supplied to the source pool and the depositor receives the corresponding yield token. When someone withdraws, the yield token is burned and the holder receives the underlying asset according to the source pool's accounting.
+
+## Asset model
+
+Each yield token has:
+
+- a wrapper mint
+- an underlying mint
+- a source pool
+- a protocol adapter
+- a creator
+- metadata, including name, symbol, and URI
+- deposit-fee configuration
+- accumulated creator and protocol fees
+
+The wrapper mint is the token users hold. The underlying mint is the asset deposited into the source pool, such as USDC or SOL. The source pool is the underlying lending venue, such as a Kamino reserve, Save reserve, Lulo protected pool, marginfi bank, or Kamino Vault.
+
+## Fungibility
+
+All tokens from the same wrapper mint are fungible. They represent claims on the same wrapper vault and redeem through the same source-pool adapter.
+
+Two yield tokens that point to different source pools are different assets, even when they share the same underlying mint. For example, a Kamino USDC yield token and a Save USDC yield token are not interchangeable unless an external market chooses to price and swap them.
+
+## Backing
+
+Yield tokens are backed by the position held in the source lending pool.
+
+When the source pool earns yield, the redeemable value per yield token can increase. If the source pool suffers losses, fees, utilization constraints, or redemption limits, the yield token inherits those conditions.
+
+```text
+wrapper supply -> redeemable claim on source-pool position
+```
+
+Overpass does not invent a separate return stream. The token's value is derived from the underlying lending protocol.
+
+## Metadata
+
+Creators can set name, symbol, and token metadata when creating a yield token. The app can also upload an image and JSON metadata to IPFS and set the metadata URI on-chain.
+
+Good metadata should make the source pool obvious:
+
+```text
+Name: Wrapped Kamino USDC
+Symbol: wkmUSDC
+Description: Overpass yield token backed by a Kamino USDC lending reserve.
+```
+
+Wallets and aggregators should still rely on registry and on-chain data when deciding whether to surface a token as verified or routeable.
+
+## Who uses yield tokens
+
+Yield tokens are useful anywhere a protocol needs a tokenized productive asset:
+
+- swap aggregators routing users into lending yield
+- wallets displaying or offering yield positions
+- vaults and indexes holding lending exposure
+- treasuries allocating idle assets
+- collateral markets evaluating yield-bearing assets
+- structured products composing lending exposure
+- lending protocols expanding distribution for their pools
+
+## What yield tokens are not
+
+Yield tokens are not risk-free stablecoins and not generic claims on all Overpass liquidity. Each token maps to a specific source pool and inherits that pool's conditions.
+
+Before integrating or routing a yield token, check the source pool, protocol, cap, utilization, pause state, withdrawal availability, stale-oracle status, and registry verification.

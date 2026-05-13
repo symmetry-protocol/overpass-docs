@@ -1,0 +1,69 @@
+---
+title: "Pricing and liquidity"
+description: "How Overpass prices yield tokens and where liquidity comes from."
+icon: "chart-line"
+---
+
+Overpass uses source-pool accounting as the source of truth for minting and redemption.
+
+It does not require a separate oracle or AMM market for primary issuance and redemption.
+
+## Pricing
+
+Lending protocols already maintain accounting for deposits, shares, reserves, exchange rates, and yield accrual. Overpass reads that accounting through the protocol adapter.
+
+If the source pool's exchange rate changes, the redeemable value of the yield token changes through the same mechanism. If the source protocol accounts for fees, losses, utilization effects, or other adjustments, Overpass follows that accounting.
+
+```text
+source-pool accounting -> Overpass quote -> mint or redeem amount
+```
+
+External oracles can still be useful for downstream integrations, such as collateral markets, risk dashboards, portfolio views, and route ranking. They are not the pricing source for the core Overpass mint and redeem path.
+
+## Net asset value
+
+For an existing wrapper, the app displays the rate between one yield token and the underlying asset. This starts at 1.0000 for an empty wrapper and changes as the source-pool position changes.
+
+The important values are:
+
+- underlying held by the wrapper
+- wrapper token supply
+- redeemable value per wrapper token
+- realized NAV growth since creation
+- current source-pool APY, when available
+
+Realized NAV growth is backward-looking. Source-pool APY is forward-looking and published by the underlying protocol.
+
+## Primary liquidity
+
+Primary liquidity comes from the source lending pool.
+
+Minting creates yield tokens by depositing into the pool. Burning exits by withdrawing from the pool.
+
+```text
+input token -> underlying asset -> Overpass mint -> yield token
+yield token -> Overpass burn -> underlying asset -> output token
+```
+
+This means a yield token can be useful without bootstrapping a separate AMM market. The source pool's real conditions determine whether deposits and withdrawals can execute.
+
+## Liquidity constraints
+
+Applications should account for:
+
+- deposit capacity
+- withdrawal availability
+- utilization
+- source-pool caps
+- paused deposits
+- stale oracle state
+- protocol health
+- known impairment or bad debt
+
+High utilization is especially important for withdrawals. A source pool can accept new deposits while still being difficult to withdraw from if borrowed liquidity is close to supplied liquidity.
+
+## Secondary liquidity
+
+Secondary markets, RFQ systems, and AMMs can improve execution for specialized flows. They are optional layers on top of Overpass primary liquidity.
+
+If a secondary market exists, integrators should compare the secondary quote against the primary mint or redeem path and consider source-pool risk before routing.

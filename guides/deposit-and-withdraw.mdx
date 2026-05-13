@@ -1,0 +1,92 @@
+---
+title: "Deposit and withdraw"
+description: "Move between underlying assets and Overpass yield tokens."
+icon: "arrow-right-arrow-left"
+---
+
+Deposits and withdrawals are the main user actions for an Overpass yield token.
+
+## Deposit
+
+A deposit supplies the underlying asset to the source pool and mints the yield token.
+
+```ts
+import { buildOverpassSwap } from "@symmetry-hq/overpass";
+
+const built = await buildOverpassSwap(connection, {
+  user: wallet.publicKey,
+  wrapperMint,
+  amount,
+  direction: "deposit",
+  minOut,
+});
+```
+
+Deposit output depends on:
+
+- source-pool accounting
+- wrapper NAV
+- protocol deposit fee
+- creator deposit fee
+- source-pool cap and pause state
+
+## Withdraw
+
+A withdrawal burns the yield token and redeems the underlying asset.
+
+```ts
+const built = await buildOverpassSwap(connection, {
+  user: wallet.publicKey,
+  wrapperMint,
+  amount,
+  direction: "withdraw",
+  minOut,
+});
+```
+
+Withdrawal output depends on:
+
+- source-pool exchange rate
+- withdrawal liquidity
+- utilization
+- source-pool health
+- protocol-specific redemption constraints
+
+## Exact-in behavior
+
+The SDK currently exposes exact-in swaps. You provide the input amount, and Overpass returns the expected output amount through quoting and transaction building.
+
+Use `minOut` to enforce the minimum acceptable output.
+
+## Balance checks
+
+Applications should check the user's token balance before building a transaction:
+
+- for deposits, check the underlying token balance
+- for withdrawals, check the yield-token balance
+
+Do not attempt to spend wrapped SOL rent reserves or non-spendable balances.
+
+## Transaction building
+
+`buildOverpassSwap` returns a built instruction bundle that can include:
+
+- instructions
+- lookup tables
+- suggested compute units
+
+Use those values when composing a versioned transaction, especially when combining Overpass with aggregator swap legs.
+
+## When to block a transaction
+
+Block or warn before sending if:
+
+- the quote returns blocking warnings
+- the user balance is insufficient
+- the requested amount is below the source minimum
+- deposits are paused
+- the pool is at capacity
+- withdrawal liquidity is unavailable
+- the source oracle is stale
+
+If a route includes a swap leg, also validate slippage and minimum output for that leg.

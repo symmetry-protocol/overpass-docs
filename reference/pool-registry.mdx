@@ -1,0 +1,89 @@
+---
+title: "Pool registry"
+description: "Metadata needed to route and display Overpass yield tokens safely."
+icon: "list-checks"
+---
+
+Permissionless token creation needs a strong discovery layer.
+
+Overpass can support broad wrapper creation while still giving wallets, aggregators, and vaults a clean way to distinguish verified routeable tokens from long-tail assets.
+
+## Registry purpose
+
+A pool registry should answer:
+
+- what source pool backs this yield token?
+- which protocol adapter is used?
+- what underlying asset does it redeem into?
+- is the wrapper verified or canonical?
+- are deposits and withdrawals currently healthy?
+- what warnings should be shown before routing?
+
+## Recommended fields
+
+Registry entries should include:
+
+- protocol name
+- pool name
+- pool kind
+- source pool address
+- underlying mint
+- underlying symbol and decimals
+- wrapper mint
+- wrapper name and symbol
+- creator address
+- adapter version
+- exchange-rate source
+- mint path
+- redemption path
+- source-pool cap
+- utilization
+- pause status
+- withdrawal availability
+- audit status
+- verification status
+- risk labels
+
+## Verification status
+
+Verification should be separate from permissionless existence.
+
+A wrapper can exist on-chain without being recommended for default routing. Wallets and aggregators should prefer verified wrappers when presenting default options to users.
+
+Potential statuses:
+
+- unverified
+- verified metadata
+- verified source pool
+- canonical route
+- deprecated
+- blocked
+
+## Risk labels
+
+Use risk labels to make source-pool conditions explicit.
+
+Examples:
+
+- deposits paused
+- at capacity
+- approaching capacity
+- high utilization
+- stale oracle
+- source pool illiquid
+- bad debt
+- deprecated source
+
+These labels should influence route ranking and user display.
+
+## Long-tail tokens
+
+The market can create many wrappers for the same source pool or underlying asset. Default routing should not treat all wrappers equally.
+
+A conservative integration should:
+
+- hide unverified wrappers by default
+- show source-pool details before execution
+- warn when metadata is missing or ambiguous
+- prefer wrappers with clear liquidity, backing, and creator history
+- allow advanced users to inspect long-tail wrappers manually

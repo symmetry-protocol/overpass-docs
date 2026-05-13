@@ -1,0 +1,94 @@
+---
+title: "Routing"
+description: "How Overpass makes Solana lending pools quoteable and routeable."
+icon: "route"
+---
+
+Overpass turns lending pool access into a routeable action.
+
+Instead of asking users to leave a wallet or aggregator, visit a lending app, and deposit manually, an application can route from a starting token into a pool-backed yield token.
+
+## Deposit route
+
+A route into a yield token has two logical parts:
+
+```text
+input token -> underlying deposit asset -> Overpass mint -> yield token
+```
+
+For example:
+
+```text
+BONK -> USDC -> Lulo USDC yield token
+SOL -> USDC -> Kamino USDC yield token
+JitoSOL -> USDC -> Save USDC yield token
+```
+
+The swap leg can be handled by an aggregator. The Overpass leg mints the selected yield token.
+
+## Exit route
+
+An exit route reverses the flow:
+
+```text
+yield token -> Overpass burn -> underlying asset -> output token
+```
+
+For example:
+
+```text
+Kamino USDC yield token -> USDC -> SOL
+Lulo USDC yield token -> USDC -> BONK
+```
+
+## What routers must account for
+
+Deposit routes should account for:
+
+- input swap quote
+- underlying deposit asset
+- Overpass mint quote
+- protocol and creator deposit fees
+- source-pool cap and pause state
+- expected yield-token output
+- metadata and registry status
+- risk labels
+
+Exit routes should account for:
+
+- Overpass burn quote
+- withdrawal availability
+- utilization and liquidity
+- expected underlying output
+- output swap quote
+- warnings from source-pool state
+
+## Deterministic protocol action
+
+Aggregators can treat Overpass deposit and withdraw as deterministic protocol actions with known accounts, quote behavior, lookup tables, and compute requirements.
+
+The SDK builder returns the instructions and lookup tables needed to compose an Overpass leg into a larger transaction.
+
+```ts
+const built = await buildOverpassSwap(connection, {
+  user,
+  wrapperMint,
+  amount,
+  direction: "deposit",
+  minOut,
+});
+```
+
+## Route warnings
+
+Quotes can include warnings. A route planner should not hide these from the user or downstream system.
+
+Warnings can reflect conditions such as:
+
+- insufficient source liquidity
+- paused deposits
+- stale oracle state
+- source-pool cap constraints
+- quote or accounting errors
+
+User-facing routes should block execution when warnings indicate a likely transaction failure.

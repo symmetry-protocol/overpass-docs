@@ -1,0 +1,78 @@
+---
+title: "Explore markets"
+description: "Find lending pools that can be tokenized through Overpass."
+icon: "magnifying-glass-chart"
+---
+
+The Markets view lists supported lending markets and reserves that can be tokenized through Overpass.
+
+Use it to compare available source pools before creating or routing into a yield token.
+
+## Browse supported venues
+
+Overpass currently surfaces pools from:
+
+- Kamino Lend
+- Kamino Vault
+- Save
+- Lulo protected pools
+- marginfi
+
+Markets are grouped by underlying asset so you can compare different venues for the same token.
+
+## Filter markets
+
+Use filters to narrow the list by:
+
+- protocol
+- minimum TVL
+- minimum APY
+- hidden markets
+- broken or risky pools
+
+Search supports token symbols, pool names, mint addresses, and pool addresses.
+
+## Read pool status
+
+Before tokenizing or routing into a pool, check its status labels.
+
+Important labels include:
+
+- at capacity
+- approaching capacity
+- deposits paused
+- high utilization
+- source pool is illiquid
+- stale oracle
+- bad debt or likely withdrawal failure
+
+These labels are not cosmetic. They indicate whether new deposits or withdrawals are likely to work.
+
+## Open pool details
+
+A pool detail page shows:
+
+- source protocol
+- underlying mint
+- APY published by the source protocol
+- TVL and liquidity data when available
+- cap information
+- utilization
+- source-pool addresses
+- existing Overpass yield tokens for that source pool
+- a **Tokenize** action when the pool is supported
+
+## Choose a source pool
+
+Choose a source pool based on the integration's needs, not APY alone.
+
+Consider:
+
+- whether deposits are open
+- whether withdrawals have available liquidity
+- whether the pool has sufficient cap remaining
+- whether the source oracle is healthy
+- whether the pool is suitable for the intended user or strategy
+- whether a verified yield token already exists for that pool
+
+If your application routes users by default, prefer verified pools with clean metadata and healthy source-pool conditions.

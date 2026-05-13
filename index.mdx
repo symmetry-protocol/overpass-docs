@@ -1,133 +1,95 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
-icon: 'star'
+description: "Overpass turns Solana lending pools into redeemable, swappable yield tokens."
+icon: "route"
 ---
 
-## Setting up
+Overpass is infrastructure for tokenized lending on Solana.
 
-Get your documentation site up and running in minutes.
+For each supported lending pool, Overpass can create a fungible yield token backed by that pool. Minting the token deposits into the underlying pool. Burning the token withdraws from the underlying pool. The token's redeemable value follows the pool's own exchange-rate, share-price, or reserve-accounting logic.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+This turns lending exposure into a standard DeFi asset: transferable, redeemable, integratable, and routeable.
 
-## Make it yours
+```text
+any token -> underlying deposit asset -> Overpass mint -> pool-backed yield token
+```
 
-Design a docs site that looks great and empowers your users.
+Examples:
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+```text
+SOL -> USDC -> Kamino USDC yield token
+BONK -> USDC -> Lulo yield token
+JitoSOL -> USDC -> Save USDC yield token
+```
+
+## What Overpass is
+
+Overpass is a tokenization and routing layer for Solana lending pools. It is built for aggregators, wallets, vaults, treasuries, index protocols, collateral markets, structured-product builders, and lending protocols.
+
+Overpass is not a consumer yield dashboard. It does not ask every user to choose a lending app, learn protocol-specific deposit flows, and manage isolated positions. Instead, it exposes lending-pool exposure as SPL tokens that applications can route into, hold, display, and redeem.
+
+## Why it exists
+
+Solana users can swap almost any token through aggregators, but lending still often requires a separate app-specific flow:
+
+- choose a lending protocol
+- choose a market or reserve
+- deposit manually
+- manage a protocol-specific position
+- exit through that protocol's interface
+
+Builders face the same fragmentation. Each lending protocol has different accounts, SDKs, accounting rules, caps, pause states, and withdrawal constraints. That makes lending yield harder to use inside wallets, vaults, indexes, treasuries, and routing systems.
+
+Overpass closes that gap by making lending pools accessible as tokenized assets.
+
+## What you can do with Overpass
+
+<CardGroup cols={2}>
+  <Card title="Explore lending markets" icon="magnifying-glass-chart" href="/guides/explore-markets">
+    Browse supported Kamino, Save, marginfi, and Lulo markets that can be tokenized.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Create yield tokens" icon="coins" href="/guides/create-yield-token">
+    Issue a pool-backed SPL token with custom metadata and an optional creator deposit fee.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Deposit and withdraw" icon="repeat" href="/guides/deposit-and-withdraw">
+    Move between the underlying deposit asset and the corresponding yield token.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Integrate with the SDK" icon="code" href="/integrations/sdk">
+    Build create, deposit, withdraw, quote, and discovery flows with `@symmetry-hq/overpass`.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How the system works
 
-Everything you need to create world-class documentation.
+Each yield token is backed by a specific source pool. The Overpass adapter for that source pool defines how to deposit, withdraw, read exchange-rate data, enforce caps, detect pause state, and build deterministic quotes.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+The high-level lifecycle is:
 
-## Make your content agent ready
+1. A creator selects a supported source pool.
+2. Overpass creates a wrapper vault and yield-token mint for that pool.
+3. Users deposit the underlying asset through Overpass.
+4. Overpass deposits that asset into the source lending protocol.
+5. Users receive yield tokens representing redeemable exposure to the source pool.
+6. Holders can burn yield tokens to withdraw the underlying asset according to source-pool accounting.
 
-Make your docs work for humans and AI agents alike.
+All tokens for the same wrapper mint are fungible. They redeem through the same adapter and inherit the same source-pool conditions.
 
-<Columns cols={2}>
-  <Card
-    title="Prompt component"
-    icon="robot"
-    href="/agent-ready/prompt"
-  >
-    Embed shareable AI prompts readers can copy or open in Cursor.
-  </Card>
-  <Card
-    title="Visibility"
-    icon="eye"
-    href="/agent-ready/visibility"
-  >
-    Show different content to humans and agents reading your docs.
-  </Card>
-  <Card
-    title="Contextual menu"
-    icon="bolt"
-    href="/agent-ready/contextual"
-  >
-    Give readers one-click access to Claude, ChatGPT, Cursor, and more.
-  </Card>
-  <Card
-    title="AI coding tools"
-    icon="wand-magic-sparkles"
-    href="/ai-tools/claude-code"
-  >
-    Set up Claude Code, Cursor, or Windsurf with Mintlify's skill.
-  </Card>
-</Columns>
+## Supported protocols
 
-## Need inspiration?
+The current implementation supports:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+- Kamino Lend
+- Kamino Vault
+- Save, formerly Solend
+- Lulo protected pools
+- marginfi v2
+
+See [supported protocols](/reference/supported-protocols) for details.
+
+## Important risk model
+
+Overpass does not remove underlying lending risk. A yield token inherits the source pool's accounting, liquidity, caps, pause state, utilization, and impairment risk.
+
+If a source pool is healthy and withdrawable, the yield token can be redeemed through Overpass. If the source pool is capped, paused, highly utilized, oracle-stale, or impaired, the token reflects those conditions.
+
+Read [risk model](/reference/risk-model) before integrating Overpass into user-facing products.

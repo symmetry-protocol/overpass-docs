@@ -1,0 +1,85 @@
+---
+title: "Fees"
+description: "Understand protocol fees, creator fees, and fee claiming."
+icon: "receipt"
+---
+
+Overpass can charge fees on deposits into yield tokens.
+
+Fees are denominated in the underlying asset and affect the number of yield tokens minted from a deposit.
+
+## Fee types
+
+Overpass supports two deposit fee types:
+
+- protocol deposit fee
+- creator deposit fee
+
+The protocol fee is configured program-wide. The creator fee is configured per wrapper by the token creator.
+
+## Creator deposit fee
+
+The creator deposit fee is set when a yield token is created. It can be updated later by the creator.
+
+The creator fee:
+
+- is charged on deposits
+- accumulates as pending fees
+- can be claimed by the creator wallet
+- is capped by the program's maximum creator fee
+
+The SDK constant `ABSOLUTE_MAX_FEE_BPS` is 1000 basis points, or 10%.
+
+## Protocol deposit fee
+
+The protocol deposit fee is set in the global Overpass config. It is charged on deposits and can be claimed by the configured protocol fee recipient.
+
+Applications can read the current global config before quoting or displaying fee breakdowns.
+
+```ts
+const config = await Overpass.fetchGlobalConfig(connection);
+
+console.log(config.state?.protocolDepositFeeBps);
+console.log(config.state?.feeRecipient.toBase58());
+```
+
+## Displaying fees
+
+User interfaces should show:
+
+- creator deposit fee
+- protocol deposit fee
+- total deposit fee
+- estimated output after fees
+
+When a user withdraws, label the action separately from deposit fees. Source protocols can still impose protocol-specific effects through their own accounting, but Overpass creator and protocol deposit fees apply to deposits.
+
+## Claim creator fees
+
+Creators can claim accumulated creator fees for their wrappers.
+
+```ts
+import { claimCreatorFees } from "@symmetry-hq/overpass";
+
+const built = await claimCreatorFees(connection, {
+  creator,
+  wrapperMint,
+  underlyingMint,
+});
+```
+
+## Update creator fee
+
+Creators can update the creator deposit fee.
+
+```ts
+import { updateCreatorFee } from "@symmetry-hq/overpass";
+
+const built = updateCreatorFee({
+  creator,
+  wrapperMint,
+  creatorDepositFeeBps: 25,
+});
+```
+
+Applications should enforce the configured maximum before sending the transaction.

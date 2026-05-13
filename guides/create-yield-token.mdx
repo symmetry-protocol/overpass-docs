@@ -1,0 +1,86 @@
+---
+title: "Create a yield token"
+description: "Issue a pool-backed SPL token for a supported lending pool."
+icon: "plus"
+---
+
+Creating a yield token turns a supported source pool into a transferable SPL asset.
+
+## Before you create
+
+Confirm that the source pool is appropriate:
+
+- the pool is supported by an Overpass adapter
+- deposits are not paused
+- the pool has capacity
+- the oracle is healthy
+- the pool does not show severe withdrawal or bad-debt warnings
+- the underlying mint is the asset you expect
+
+You should also check whether a good existing wrapper already exists. Multiple yield tokens can reference the same source pool, but wallets and aggregators may prefer verified or canonical wrappers.
+
+## Required fields
+
+When creating a token, provide:
+
+- source pool address
+- source kind, such as `klend`, `kvault`, `save`, `lulo`, or `marginfi`
+- underlying mint
+- token name
+- token symbol
+- metadata URI
+- creator deposit fee in basis points
+
+The app can upload token image and JSON metadata to IPFS before creating the wrapper.
+
+## Creator fee
+
+Creators can set a deposit fee for the wrapper. The fee is charged on deposits and accumulates as pending creator fees.
+
+The fee must be non-negative and cannot exceed the program's configured maximum creator deposit fee. The absolute maximum enforced by the SDK is 1000 basis points, or 10%.
+
+Creator fees can be updated later by the creator.
+
+## Initial deposit
+
+An initial deposit is optional. If supplied, the wrapper is funded in the same transaction as creation.
+
+Using an initial deposit is recommended when launching a public token because it gives the wrapper immediate backing and a clear initial NAV.
+
+Some source pools have minimum deposit constraints. The app displays minimums when available and blocks below-minimum initial deposits.
+
+## Create with the SDK
+
+```ts
+import { createWrapper } from "@symmetry-hq/overpass";
+import { PublicKey } from "@solana/web3.js";
+
+const result = await createWrapper(connection, {
+  creator: wallet.publicKey,
+  source: new PublicKey("SOURCE_POOL_ADDRESS"),
+  underlyingMint: new PublicKey("UNDERLYING_MINT"),
+  name: "Wrapped Kamino USDC",
+  symbol: "wkmUSDC",
+  uri: "ipfs://metadata-json",
+  creatorDepositFeeBps: 20,
+  initialDeposit: {
+    amount: 1_000_000n,
+    minOut: 0n,
+  },
+});
+
+const signed = await wallet.signTransaction(result.tx);
+await connection.sendTransaction(signed);
+```
+
+## After creation
+
+After the transaction confirms:
+
+- the wrapper vault exists on-chain
+- the yield-token mint exists
+- the token metadata is attached
+- the creator can claim future creator fees
+- users can deposit into or withdraw from the yield token
+
+Applications should index the new wrapper by wrapper mint, source pool, protocol, creator, and underlying mint.
