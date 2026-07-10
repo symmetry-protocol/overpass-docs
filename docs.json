@@ -21,8 +21,9 @@
             ]
           },
           {
-            "group": "Swap API",
+            "group": "Overpass API",
             "pages": [
+              "api-reference/tokens",
               "api-reference/quote",
               "api-reference/swap"
             ]
