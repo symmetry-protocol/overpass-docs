@@ -21,6 +21,13 @@
             ]
           },
           {
+            "group": "Swap API",
+            "pages": [
+              "api-reference/quote",
+              "api-reference/swap"
+            ]
+          },
+          {
             "group": "Core concepts",
             "pages": [
               "concepts/yield-tokens",
@@ -45,13 +52,6 @@
               "integrations/jupiter-routing",
               "integrations/aggregators",
               "integrations/wallets-and-vaults"
-            ]
-          },
-          {
-            "group": "Swap API",
-            "pages": [
-              "api-reference/quote",
-              "api-reference/swap"
             ]
           },
           {
