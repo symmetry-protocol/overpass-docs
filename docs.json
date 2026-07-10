@@ -48,6 +48,13 @@
             ]
           },
           {
+            "group": "Swap API",
+            "pages": [
+              "api-reference/quote",
+              "api-reference/swap"
+            ]
+          },
+          {
             "group": "Reference",
             "pages": [
               "reference/supported-protocols",

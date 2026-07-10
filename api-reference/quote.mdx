@@ -1,0 +1,134 @@
+---
+title: "Get a quote"
+description: "Quote an exact-in swap between an Overpass yield token and its underlying asset."
+icon: "calculator"
+---
+
+Get an exact-in quote for depositing an underlying asset into an Overpass yield token or withdrawing a yield token back to its underlying asset.
+
+```text
+GET https://api-v1.overpass.ag/v1/quote
+```
+
+The core request and response fields follow the Jupiter exact-in quote shape. Overpass adds wrapper, source-pool, protocol, fee, and warning metadata.
+
+## Query parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `inputMint` | string | Yes | Input token mint. Must be the wrapper mint or its underlying mint. |
+| `outputMint` | string | Yes | Output token mint. Must be the other mint in the wrapper pair. |
+| `amount` | string | Yes | Exact input amount in raw integer units before token decimals. |
+| `slippageBps` | integer | No | Slippage tolerance in basis points. Defaults to `50`. |
+| `swapMode` | string | No | Swap mode. The supported value is `ExactIn`. |
+| `userPublicKey` | string | No | Wallet public key used for per-wallet rate limiting. |
+
+## Request
+
+This example quotes `0.01 SOL` into the infSOL yield token.
+
+```bash
+curl --get 'https://api-v1.overpass.ag/v1/quote' \
+  --data-urlencode 'inputMint=So11111111111111111111111111111111111111112' \
+  --data-urlencode 'outputMint=HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV' \
+  --data-urlencode 'amount=10000000' \
+  --data-urlencode 'slippageBps=50' \
+  --data-urlencode 'swapMode=ExactIn'
+```
+
+## Response
+
+```json
+{
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "inAmount": "10000000",
+  "outputMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+  "outAmount": "9922552",
+  "otherAmountThreshold": "9872939",
+  "swapMode": "ExactIn",
+  "slippageBps": 50,
+  "platformFee": null,
+  "priceImpactPct": "0",
+  "routePlan": [
+    {
+      "swapInfo": {
+        "ammKey": "9iJeZPrNJrBEjj4h7tD9P3hygyM4hpZmyqrQmHjNUpdA",
+        "label": "Overpass kamino",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+        "inAmount": "10000000",
+        "outAmount": "9922552",
+        "feeAmount": "0",
+        "feeMint": "So11111111111111111111111111111111111111112"
+      },
+      "percent": 100
+    }
+  ],
+  "contextSlot": 431902057,
+  "timeTaken": 0.069,
+  "wrapperMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+  "wrapperVault": "9iJeZPrNJrBEjj4h7tD9P3hygyM4hpZmyqrQmHjNUpdA",
+  "underlyingMint": "So11111111111111111111111111111111111111112",
+  "sourcePool": "HaVsdBb4mMoYQ3vnS7wCdvhixg5xFQALmFwyL9QJm3fn",
+  "protocol": "kamino",
+  "direction": "deposit",
+  "protocolDepositFeeBps": 0,
+  "creatorDepositFeeBps": 0,
+  "warnings": []
+}
+```
+
+`outAmount` is the quoted output before slippage. `otherAmountThreshold` is the minimum output accepted by the generated transaction.
+
+The API determines `direction` from the mint pair:
+
+- underlying mint to wrapper mint returns `deposit`
+- wrapper mint to underlying mint returns `withdraw`
+
+Always evaluate `warnings` before offering a quote for execution. Warnings can indicate source-pool conditions that make the route unsafe or likely to fail.
+
+## JavaScript
+
+```ts
+const params = new URLSearchParams({
+  inputMint,
+  outputMint,
+  amount: amountRaw.toString(),
+  slippageBps: "50",
+  swapMode: "ExactIn",
+  userPublicKey: wallet.publicKey.toBase58(),
+});
+
+const response = await fetch(
+  `https://api-v1.overpass.ag/v1/quote?${params}`,
+);
+
+if (!response.ok) {
+  const error = await response.json();
+  throw new Error(error.message ?? error.error);
+}
+
+const quoteResponse = await response.json();
+```
+
+Use the complete response as `quoteResponse` when you [build the swap transaction](/api-reference/swap).
+
+## Errors
+
+Errors use a consistent JSON shape:
+
+```json
+{
+  "error": "route_not_found",
+  "message": "No Overpass route found for the requested mint pair"
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid mint, amount, mint pair, slippage, or swap mode. |
+| `404` | No Overpass wrapper route exists for the mint pair. |
+| `409` | The resolved wrapper account does not match the requested wrapper mint. |
+| `422` | The source protocol could not produce a quote. |
+| `429` | The request exceeded the API rate limit. |
+| `503` | Current source-protocol state is unavailable. |

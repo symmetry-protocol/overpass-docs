@@ -1,0 +1,174 @@
+---
+title: "Build a swap transaction"
+description: "Build an unsigned versioned transaction from an Overpass quote."
+icon: "right-left"
+---
+
+Build an unsigned Solana versioned transaction from an Overpass exact-in quote.
+
+```text
+POST https://api-v1.overpass.ag/v1/swap
+```
+
+The transaction deposits an underlying asset and mints the yield token, or burns the yield token and withdraws the underlying asset. The direction comes from the quote's mint pair.
+
+## Request body
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `userPublicKey` | string | Yes | Wallet that signs and pays for the transaction. |
+| `quoteResponse` | object | Conditional | Complete response returned by `GET /v1/quote`. Required unless `inputMint`, `outputMint`, and `amount` are supplied directly. |
+| `priorityFeeMicroLamports` | integer | No | Compute-unit price in micro-lamports. Defaults to `0`. |
+| `computeUnitLimit` | integer | No | Explicit compute-unit limit. The API otherwise uses the builder's suggested limit. |
+
+Pass the quote response unchanged. This preserves the quote's `otherAmountThreshold` as the minimum acceptable output.
+
+```ts
+const response = await fetch("https://api-v1.overpass.ag/v1/swap", {
+  method: "POST",
+  headers: {
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({
+    userPublicKey: wallet.publicKey.toBase58(),
+    quoteResponse,
+  }),
+});
+
+if (!response.ok) {
+  const error = await response.json();
+  throw new Error(error.message ?? error.error);
+}
+
+const swap = await response.json();
+```
+
+## Response
+
+```json
+{
+  "swapTransaction": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...",
+  "lastValidBlockHeight": 409970749,
+  "prioritizationFeeLamports": 0,
+  "priorityFeeMicroLamports": 0,
+  "computeUnitLimit": 430000,
+  "swapMode": "ExactIn",
+  "txVersion": "V0",
+  "quoteResponse": {
+    "inputMint": "So11111111111111111111111111111111111111112",
+    "inAmount": "10000000",
+    "outputMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+    "outAmount": "9922552",
+    "otherAmountThreshold": "9872939",
+    "swapMode": "ExactIn",
+    "slippageBps": 50,
+    "platformFee": null,
+    "priceImpactPct": "0",
+    "routePlan": [
+      {
+        "swapInfo": {
+          "ammKey": "9iJeZPrNJrBEjj4h7tD9P3hygyM4hpZmyqrQmHjNUpdA",
+          "label": "Overpass kamino",
+          "inputMint": "So11111111111111111111111111111111111111112",
+          "outputMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+          "inAmount": "10000000",
+          "outAmount": "9922552",
+          "feeAmount": "0",
+          "feeMint": "So11111111111111111111111111111111111111112"
+        },
+        "percent": 100
+      }
+    ],
+    "contextSlot": 431902057,
+    "timeTaken": 0.029,
+    "wrapperMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+    "wrapperVault": "9iJeZPrNJrBEjj4h7tD9P3hygyM4hpZmyqrQmHjNUpdA",
+    "underlyingMint": "So11111111111111111111111111111111111111112",
+    "sourcePool": "HaVsdBb4mMoYQ3vnS7wCdvhixg5xFQALmFwyL9QJm3fn",
+    "protocol": "kamino",
+    "direction": "deposit",
+    "protocolDepositFeeBps": 0,
+    "creatorDepositFeeBps": 0,
+    "warnings": []
+  }
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `swapTransaction` | Base64-encoded unsigned versioned transaction. |
+| `lastValidBlockHeight` | Last block height at which the transaction remains valid. |
+| `prioritizationFeeLamports` | Total priority fee implied by the compute limit and compute-unit price. |
+| `priorityFeeMicroLamports` | Compute-unit price included in the transaction. |
+| `computeUnitLimit` | Compute-unit limit included in the transaction. |
+| `txVersion` | Transaction version. Overpass returns `V0`. |
+| `quoteResponse` | Fresh quote used to build the transaction. |
+
+## Sign and send
+
+Deserialize the transaction, ask the wallet to sign it, and submit the signed bytes through your Solana connection.
+
+```ts
+import { Connection, VersionedTransaction } from "@solana/web3.js";
+
+const connection = new Connection(SOLANA_RPC_URL, "confirmed");
+const transaction = VersionedTransaction.deserialize(
+  Uint8Array.from(globalThis.atob(swap.swapTransaction), (character) =>
+    character.charCodeAt(0),
+  ),
+);
+
+const simulation = await connection.simulateTransaction(transaction, {
+  sigVerify: false,
+});
+
+if (simulation.value.err) {
+  throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
+}
+
+const signed = await wallet.signTransaction(transaction);
+const signature = await connection.sendRawTransaction(signed.serialize(), {
+  skipPreflight: false,
+  maxRetries: 3,
+});
+
+await connection.confirmTransaction(
+  {
+    signature,
+    blockhash: transaction.message.recentBlockhash,
+    lastValidBlockHeight: swap.lastValidBlockHeight,
+  },
+  "confirmed",
+);
+```
+
+Request a new quote and transaction when the block height expires or when execution fails because source-pool state changed.
+
+## Direct request
+
+You can build a transaction without sending a prior quote response by providing the route fields directly:
+
+```json
+{
+  "userPublicKey": "BQ72nSv9f3PRyRKCBnHLVrerrv37CYTHm5h3s9VSGQDV",
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "HtnnuzVtecjktsUoZjHaZoZ9u4jPAzGpujE82U3v3cAV",
+  "amount": "10000000",
+  "slippageBps": 50,
+  "swapMode": "ExactIn"
+}
+```
+
+The API computes a fresh quote before building the transaction. Use the quote-first flow when you need to display the expected output, fees, or warnings before execution.
+
+## Errors
+
+Swap errors use the same `{ "error", "message" }` shape as the quote endpoint.
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Missing quote fields, invalid wallet, amount, slippage, or swap mode. |
+| `404` | No Overpass wrapper route exists for the mint pair. |
+| `422` | The route could not be quoted or built. |
+| `429` | The request exceeded the API rate limit. |
+| `503` | Current source-protocol state is unavailable. |
